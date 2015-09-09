@@ -2,7 +2,26 @@
 var BuiltApp       = Built.App('blt7e1db158639f1ede');
 
 //Create `todoApp` AngularJS module added `ngRoute` as dependency
-angular.module('todoApp',[])
+angular.module('todoApp',['ngRoute'])
+  .config(['$routeProvider','$locationProvider', function($routeProvider, $locationProvider){
+    $routeProvider
+      .when('/', {
+        templateUrl : 'template/sign-in.html',
+        controller  : 'SignInController'
+      })
+      .when('/sign-up', {
+        templateUrl : 'template/sign-up.html',
+        controller  : 'SignUpController'
+      })
+      .when('/todo', {
+        templateUrl : 'template/todo.html',
+        controller  : 'TaskListController'
+      })
+      .when('/google_login', {
+        templateUrl : 'template/google-login.html',
+        controller  : 'GoogleLoginController'
+      })
+  }])
   .controller('TaskListController', function($scope, $rootScope, $location, $timeout) {
     $scope.taskList = [];
     $scope.collaborator = {
@@ -50,7 +69,7 @@ angular.module('todoApp',[])
           .then(function(responseObj){
             // On success `responseObj` return a Built.IO Backend's Object we just created
             $sa($scope, function(){
-              // add `responseObj` to our `$scope.todoList`
+              // add `responseObj` to our `$scope.taskList`
               $scope.taskList.push(responseObj);
               // clear the input text on html form
               $scope.taskText = '';
@@ -103,7 +122,168 @@ angular.module('todoApp',[])
       var newTask = task.set('task_status',task.get('task_status'));
       $scope.updateTask(newTask, index);
     }
-  });
+  })
+  .controller('SignUpController', function($scope) {
+    /* Built.IO Backend Application User Sign-Up/Register */
+    $scope.signUp = function() {
+      /* Create `user` Object */
+      var user = BuiltApp.User();
+      /* User Registeration */
+      user.register($scope.email, $scope.password1, $scope.password2)
+          .then(function(data) {
+              /* Clear Form Elements */
+              $sa($scope, function() {
+                  $scope.email = "";
+                  $scope.password1 = "";
+                  $scope.password2 = "";
+              })
+          }, function(err) {
+              console.log('Error', err);
+          })
+    }
+  })
+  .controller('SignInController', function($scope, $location, $rootScope) {
+      /* Redirect to `todo` route when user is present */
+      if ($scope.user) {
+          return $location.path('/todo');
+      }
+
+      /*
+        User Sign-In method
+      */
+      $scope.signIn = function() {
+        /* Create a `user` instance from SDK User constructor */
+        var user = BuiltApp.User();
+
+        /* Built.io Backend - login method */
+        user.login($scope.email, $scope.password)
+          .then(function(data) {
+            /* 
+              Set user on rootscope so It can be accessible to other controller 
+            */
+            $rootScope.setUser(data.toJSON());
+            /*
+              If user logs in successfully redirect to `/todo` route
+            */
+            $sa($scope, function() {
+              $location.path('/todo');
+            })
+
+          }, function(error) {
+            /*
+              If user log-in fails set `$scope.signInStatus`
+              This is show error message on log-in route.
+            */
+            $sa($scope, function() {
+                $scope.signInStatus = {
+                    "status": false,
+                    "message": "Sign-In failed."
+                }
+            })
+          });
+      }
+
+      /*
+        Sign-in user with Google
+      */
+      $scope.signInWithGoogle = function() {
+        //
+        var e = function(u) {
+            return encodeURIComponent(u);
+        }
+        var base = 'https://accounts.google.com/o/oauth2/auth';
+        var response_type = e('token');
+        var client_id = e('322741339463-m02mbf2ikp9oc9bb930lh8h70hq8s4k0.apps.googleusercontent.com');
+        var redirect_uri = e(document.URL.split("/#")[0] + '/google_oauth_callback.html');
+        var scope = e('https://www.googleapis.com/auth/userinfo.email');
+        var state = e('lollalal');
+        var approval_prompt = e('auto');
+        var hd = 'raweng.com';
+
+        base = base +
+            '?response_type=' + response_type +
+            '&client_id=' + client_id +
+            '&redirect_uri=' + redirect_uri +
+            '&scope=' + scope +
+            '&state=' + state +
+            '&approval_prompt=' + approval_prompt;
+        // + '&hd=' + hd;
+
+        window.location.href = base;
+        return false;
+      }
+  })
+  .controller('GoogleLoginController', function($scope, $routeParams, $rootScope, $location) {
+    /* Get token from Query Params */
+    var google_token = $routeParams.google_token;
+    var user = BuiltApp.User();
+
+    /*
+      SDK method accepts google auth token
+    */
+    user.loginWithGoogle(google_token)
+        .then(function(user) {
+            $rootScope.setUser(user.toJSON());
+            $sa($scope, function() {
+                $location.search(''); // Clears query params
+                $location.path('/todo');
+            })
+        }, function(error) {
+            $sa($scope, function() {
+                $scope.signInStatus = {
+                    "status": false,
+                    "message": "Sign-In with Google failed."
+                }
+            })
+        })
+  })
+  .run(['$rootScope', '$location',
+    function($rootScope, $location) {
+      /* Set User on a `$rootScope` */
+      $rootScope.setUser = function(user) {
+        console.log('Current User', user);
+        $rootScope.currentUser = user;
+      }
+
+      /* Delete User Information */
+      $rootScope.clearUser = function() {
+        delete $rootScope.currentUser;
+      }
+
+      /* Logout current user and redirect to `/` route */
+      $rootScope.logout = function() {
+        BuiltApp.User.getCurrentUser()
+          .then(function(user) {
+            return user.logout();
+          })
+          .then(function(res) {
+            BuiltApp.User.clearSession;
+            $sa($rootScope, function() {
+              $rootScope.clearUser();
+              $location.path('/');
+            });
+          }, function(err) {
+            $sa($rootScope, function() {
+              $rootScope.clearUser();
+              $location.path('/');
+            });
+          });
+      }
+
+      /*
+        If current user is present redirect to `/profile` route
+      */
+      BuiltApp.User.getCurrentUser()
+        .then(function(data) {
+          $sa($rootScope, function() {
+            $rootScope.setUser(data);
+            $location.path('/todo');
+          });
+        }, function(error) {
+          console.log('Please Login Again.');
+        });
+    }
+  ])
 
 // Safely apply changes
 function $sa(scope, fn) {
