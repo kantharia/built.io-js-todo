@@ -1,0 +1,55 @@
+span {display:inline-block;}
+
+.done-true {
+  text-decoration: line-through;
+  color: grey;
+}
+
+.action{
+	color: #CCCCCC;
+	font-size: 9pt;
+	cursor: pointer;
+  margin: 0px 3px 0px 3px;
+}
+.action:hover{
+  color: #888888;
+}
+
+.unstyled{
+	list-style-type: none;
+}
+
+.collaboration {
+	margin-bottom: 5px;
+	display: block;
+	border:1px solid #EEEEEE;
+}
+
+.attachments {
+	margin-bottom: 5px;
+	display: block;
+	border: 1px solid #EEEEEE;
+}
+
+.text-center {
+	text-align: center;
+	display: block;
+}
+
+.bg-red{
+	background-color: red;
+}
+
+/* Input Type File */
+input[type=file] {
+  display: inline-block;
+}
+
+.attachment-form{
+	padding: 5px;
+  background-color: #E1E1E1;
+}
+
+.attachments-list{
+	padding: 5px;
+}
