@@ -1,5 +1,6 @@
 //Initialize Built.io Backend Application
 var BuiltApp       = Built.App('blt7e1db158639f1ede');
+var EmployeeRoleID = 'bltf6f2fd41fa4c15f2';
 
 //Create `todoApp` AngularJS module added `ngRoute` as dependency
 angular.module('todoApp',['ngRoute'])
@@ -39,12 +40,27 @@ angular.module('todoApp',['ngRoute'])
       // `builtQuery` is an instance of Backend's Query.
       var builtQuery = BuiltClass.Query();
 
-      builtQuery
-        .exec()
-        .then(function(objects){
-          $sa($scope, function(){
-            $scope.taskList = objects;
-          });
+      /* 
+        First get current user 
+        and then execute builtQuery 
+      */
+      BuiltApp.User.getCurrentUser()
+        .then(function(user){
+          var uid = user.toJSON().uid;
+          builtQuery = builtQuery.where('app_user_object_uid', uid);
+          builtQuery
+            .exec()
+            .then(function(data){
+              $sa($scope, function(){
+               /* Populate taskList */
+                $scope.taskList = data;
+              });
+            })
+        }, function(){
+          /* If current user is null, redirect to '/' sign-in route */
+          $timeout(function(){
+            $location.path('/')
+          },0);
         });
 
     /* Add new task in taskList */
@@ -130,13 +146,15 @@ angular.module('todoApp',['ngRoute'])
       var user = BuiltApp.User();
       /* User Registeration */
       user.register($scope.email, $scope.password1, $scope.password2)
-          .then(function(data) {
-              /* Clear Form Elements */
-              $sa($scope, function() {
-                  $scope.email = "";
-                  $scope.password1 = "";
-                  $scope.password2 = "";
-              })
+          .then(function(user) {
+            /* Add current user to role */
+            $rootScope.addUserToRole(EmployeeRoleID, user.get('uid'));
+            /* Clear Form Elements */
+            $sa($scope, function() {
+                $scope.email = "";
+                $scope.password1 = "";
+                $scope.password2 = "";
+            })
           }, function(err) {
               console.log('Error', err);
           })
@@ -223,6 +241,8 @@ angular.module('todoApp',['ngRoute'])
     */
     user.loginWithGoogle(google_token)
         .then(function(user) {
+            /* Add current user to role */
+            $rootScope.addUserToRole(EmployeeRoleID, user.get('uid'));
             $rootScope.setUser(user.toJSON());
             $sa($scope, function() {
                 $location.search(''); // Clears query params
@@ -271,6 +291,33 @@ angular.module('todoApp',['ngRoute'])
       }
 
       /*
+        Add user to role
+      */
+      $rootScope.addUserToRole = function(roleUID, userUID){
+        //Create a `Role`
+        var role      = BuiltApp.Role(roleUID);
+        var roleUsers = [];
+
+        /* 
+          Fetch all exsisting users uid from role 
+        */
+        role
+         .fetch()
+          .then(function(data){
+            roleUsers = data.get('users');
+            roleUsers.push(userUID);
+            /*
+              Add the current user uid to Role
+            */
+            role
+              .addUsers(roleUsers)
+              .save()
+              .then(function(data){
+              })
+          });
+      }
+
+    /*
         If current user is present redirect to `/profile` route
       */
       BuiltApp.User.getCurrentUser()
