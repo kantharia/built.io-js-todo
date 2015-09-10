@@ -288,6 +288,100 @@ angular.module('todoApp',['ngRoute'])
       }
     }
 
+    /*************************************************
+    * Show attachments added to current task
+    *************************************************/
+    $scope.showAttachmentsBox = function(task){
+      var index = $scope.taskList.indexOf(task);
+      $scope.taskList.forEach(function(task){
+        delete task.showCollaborationBox;
+        delete task.showAttachmentsBox;
+      })
+
+      if($scope.taskList[index].showAttachmentsBox){
+        $scope.taskList[index].showAttachmentsBox = false;
+      } else {
+        $scope.taskList[index].showAttachmentsBox = true;
+      }
+
+      $scope.uploadAttachment = function(task){
+        var index             = $scope.taskList.indexOf(task);
+        var inputFileElements = document.getElementsByClassName('input-file');
+        var inputFileElement  = '';
+
+        //Get Current fileElement
+        for(var i in inputFileElements){
+          if(inputFileElements[i].value){
+            inputFileElement = inputFileElements[i];
+          }
+        }
+        
+        var upload = BuiltApp.Upload();
+            upload = upload.setFile(inputFileElement);
+
+        upload
+          .save()
+          .then(function(file){
+            console.log('Files uploaded successfully!', file);
+            //Get all the list of attachments
+            var files = task.get('attachments') || [];
+                files = files.map(function(file){
+                  return file.uid;
+                })
+            files.push(file.getUid());
+            console.log('Files', files);
+            task = task.set('attachments', files);
+
+            task
+              .save()
+              .then(function(data){
+                //Update DOM
+                $sa($scope, function(){
+                  $scope.taskList.splice(index,1,data);
+                })
+              })
+          })
+      }
+
+      //Download Attachment
+      $scope.downloadAttachment = function(file){
+        var upload = BuiltApp.Upload(file.uid);
+        upload
+          .fetch()
+          .then(function(file){
+            /* Append AUTHTOKEN as params to URL*/
+            file.params.url += '?AUTHTOKEN='+$scope.currentUser.get('authtoken');
+            file.download();
+          });
+        return false;
+      }
+
+      //Delete Attachments
+      $scope.deleteAttachment = function(task, file){
+        var index       = $scope.taskList.indexOf(task);
+        var attachments = task.get('attachments');
+
+        //Update Attachments 
+        attachments = attachments.filter(function(attachment){
+          if(attachment.uid !== file.uid){
+            return attachment;
+          }
+        });
+
+        //Delete a file
+        var upload = BuiltApp.Upload(file.uid)
+            upload
+              .delete()
+              .then(function(){
+              });
+
+        $sa($scope, function(){
+          task = task.set('attachments', attachments);
+          $scope.taskList.splice(index,1,task);
+        })
+      }
+    }
+
   })
   .controller('SignUpController', function($scope, $rootScope) {
     /* Built.IO Backend Application User Sign-Up/Register */

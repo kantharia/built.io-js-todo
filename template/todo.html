@@ -24,9 +24,8 @@
       <span class="done-{{task.toJSON().task_status}}">{{task.toJSON().task_text}}</span>
       <span class="action" ng-click="removeTask(task)">delete</span>
       <span class="action" ng-click="editTaskText(task)">edit</span>
-      <span class="action" ng-click="showCollaborationBox(task)">
-        share
-      </span>
+      <span class="action" ng-click="showCollaborationBox(task)">share</span>
+      <span class="action" ng-click="showAttachmentsBox(task)">attachments</span> 
       <!-- Collaboration Box -->
       <div class="collaboration" ng-show="task.showCollaborationBox">
         <form 
@@ -64,6 +63,23 @@
           <span class="text-center">No Collaborator</span>
         </div>
       </div><!-- /Collaboration Box -->
+      <!-- Attachments -->
+      <div class="attachments" ng-show="task.showAttachmentsBox">
+        <form ng-submit="uploadAttachment(task)" class="attachment-form">
+          <input type="file" class="input-file">
+          <button type="submit" class="btn btn-xs btn-default">
+            <i class="fa fa-upload"></i> Upload
+          </button>
+        </form>
+        <ul class="list-unstyled attachments-list">
+          <li ng-repeat="file in task.data.attachments">
+            <span class="action" ng-click="deleteAttachment(task, file)">
+              <i class="fa fa-trash-o"></i>
+            </span>
+            <a ng-click="downloadAttachment(file)">{{file.filename}}</a>
+          </li>
+        </ul>
+      </div><!-- /Attachments -->
     </li>
     <div>
     </div>
