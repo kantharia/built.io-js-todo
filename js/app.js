@@ -45,7 +45,7 @@ angular.module('todoApp',['ngRoute'])
           var authtoken = user.toJSON().authtoken;
 
           // `BuiltClass` is an instance of Backend class. 
-          var BuiltClass = BuiltApp.Class('tasks');
+          var BuiltClass = BuiltApp.setAuthToken(authtoken).Class('tasks');
 
           // `builtQuery` is an instance of Backend's Query.
           var builtQuery = BuiltClass.Query();
