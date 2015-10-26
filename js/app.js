@@ -225,7 +225,6 @@ angular.module('todoApp',['ngRoute'])
                   Get ACL of the object and push it in new acl instance 
                 */
                 if(task.get('ACL').users){
-                  console.log('USERS IN ACL', users);
                   task.get('ACL').users.forEach(function(user){
                     acl.data.users.push(user)
                   })
