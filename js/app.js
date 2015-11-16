@@ -25,9 +25,7 @@ angular.module('todoApp',['ngRoute'])
   }])
   .controller('TaskListController', function($scope, $rootScope, $location, $timeout) {
     $scope.taskList = [];
-    $scope.collaborator = {
-      email : ""
-    }
+    
     /*
       Populate `taskList`
       ===================
@@ -184,7 +182,10 @@ angular.module('todoApp',['ngRoute'])
       /* 
         Clear add collaborator form
       */
-        $scope.collaborator.email = "";
+        $scope.collaborator = {
+          email : ""
+        }
+
         $scope.taskList.forEach(function(task){
           delete task.showCollaborationBox;
           delete task.showAttachmentsBox;
