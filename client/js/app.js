@@ -559,18 +559,20 @@ angular.module('todoApp',['ngRoute'])
           });
       }
 
-    /*
-        If current user is present redirect to `/profile` route
+      /*
+        If current user is present redirect to `/todo` route
       */
-      BuiltApp.User.getCurrentUser()
-        .then(function(data) {
-          $sa($rootScope, function() {
-            $rootScope.setUser(data);
-            $location.path('/todo');
+      if(BuiltApp.User.isAuthenticated()){
+        BuiltApp.User.getCurrentUser()
+          .then(function(data) {
+            $sa($rootScope, function() {
+              $rootScope.setUser(data);
+              $location.path('/todo');
+            });
+          }, function(error) {
+            console.log('Please Login Again.');
           });
-        }, function(error) {
-          console.log('Please Login Again.');
-        });
+      }
     }
   ])
 
