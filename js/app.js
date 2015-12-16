@@ -406,7 +406,7 @@ angular.module('todoApp',['ngRoute'])
   })
   .controller('SignInController', function($scope, $location, $rootScope) {
       /* Redirect to `todo` route when user is present */
-      if ($scope.user) {
+      if ($scope.user || $rootScope.currentUser) {
           return $location.path('/todo');
       }
 
@@ -577,5 +577,5 @@ angular.module('todoApp',['ngRoute'])
 
 // Safely apply changes
 function $sa(scope, fn) {
-  (scope.$$phase || scope.$root.$$phase) ? fn() : scope.$apply(fn);
+  (scope.$$phase || scope.$root && scope.$root.$$phase) ? fn() : scope.$apply(fn);
 }
