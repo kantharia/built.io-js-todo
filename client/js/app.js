@@ -519,7 +519,7 @@ angular.module('todoApp',['ngRoute'])
             return user.logout();
           })
           .then(function(res) {
-            BuiltApp.User.clearSession;
+            BuiltApp.User.clearSession();
             $sa($rootScope, function() {
               $rootScope.clearUser();
               $location.path('/');
